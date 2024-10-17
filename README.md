@@ -5,4 +5,3 @@ This is a separate application, so it doesn't depend on SugarcaneIRC, but uses t
 ## Requirements
 * [Sugarcane Parse IRC](https://github.com/sweeistaken/SugarcaneParseIRC)
 * [Pygame](https://pypi.org/project/pygame)
-* TKinter
