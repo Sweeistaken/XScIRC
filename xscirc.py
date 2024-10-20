@@ -23,10 +23,11 @@ print("Importing SugarCaneParse IRC...")
 import scparseirc
 print("Initializing PyGame...")
 pygame.init()
-def tprint(message):
+def tprint(message:str):
   global splash
-  print("[" + threading.current_thread().name + "] " + message)
-  splash += "\n[" + threading.current_thread().name + "] " + message
+  for i in message.split("\n"):
+    print("[" + threading.current_thread().name + "] " + i)
+    splash += "\n[" + threading.current_thread().name + "] " + i
 def handle_error():
   global loading
   loading = True
@@ -59,15 +60,17 @@ icon = pygame.image.load(os.path.dirname(os.path.realpath(__file__)) + '/assets/
 pygame.display.set_icon(icon)
 run=True
 loading=True
+client = scparseirc.IRCSession()
 def ircloop():
-   tprint("Mainloop started.")
-   while run:
-      sleep(5)
-      tprint("Ping")
-      pass
-   tprint("Mainloop ended.")
+    global client
+    tprint("Mainloop started.")
+    client.connect()
+    client.join("##sweezero")
+    while client.connected:
+      tprint(client.get().replace("\r", ""))
+    tprint("Mainloop ended.")
 tprint("Starting IRC thread...")
-ircthread = threading.Thread(target=ircloop)
+ircthread = threading.Thread(target=ircloop, daemon=True)
 ircthread.start()
 tprint("Reached mainloop!")
 try:
@@ -88,5 +91,10 @@ while run:
           run=False
     
 print("Mainloop ended, destroying pygame window.")
+client.quit()
+while client.connected:
+  sleep(5)
+  tprint("Waiting for client to quit...")
+  pass
 pygame.display.quit()
 print("Exited successfully")
