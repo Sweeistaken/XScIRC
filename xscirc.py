@@ -25,9 +25,8 @@ print("Initializing PyGame...")
 pygame.init()
 def tprint(message:str):
   global splash
-  for i in message.split("\n"):
-    print("[" + threading.current_thread().name + "] " + i)
-    splash += "\n[" + threading.current_thread().name + "] " + i
+  print(message)
+  splash += message + "\n"
 def handle_error():
   global loading
   loading = True
@@ -43,14 +42,27 @@ pygame.display.set_caption('XScIRC')
 white = (255, 255, 255)
 font_debug = pygame.font.SysFont('monospace', 14)
 splash2 = []
+spinner = "|"
 splashRect = []
+def render_spinner():
+  global spinner
+  while True:
+    sleep(0.1)
+    spinner = "/"
+    sleep(0.1)
+    spinner = "-"
+    sleep(0.1)
+    spinner = "\\"
+    sleep(0.1)
+    spinner = "|"
 def get_splashtext():
   global splash2
   global splashRect
+  global spinner
   splash2 = []
   splashRect = []
   y = 0
-  for i in splash.split("\n"):
+  for i in (splash+spinner).split("\n"):
     j = font_debug.render(i, True, white)
     splash2.append(j)
     h = j.get_rect()
@@ -62,21 +74,27 @@ run=True
 loading=True
 client = scparseirc.IRCSession()
 def ircloop():
+    cacheindex = 0
     global client
-    tprint("Mainloop started.")
     client.connect()
+    client.detach_connection()
     client.join("##sweezero")
     while client.connected:
-      tprint(client.get().replace("\r", ""))
+      if len(client.messages) > cacheindex:
+        for i in client.messages[cacheindex:]:
+          if i.__class__ == scparseirc.SystemMessage:
+            tprint(("ERROR: " if i.type == "error" else "") + f"{"[" + i.user.name + "] " if not i.user.system else ""}{i.content}")
+          elif i.__class__ == scparseirc.ParserMessage:
+            tprint(f"!> {i.content}")
+          else:
+            tprint(f"[{i.author.name}@{i.target.name if i.target.__class__ == scparseirc.Channel else "PMs"}] {i.content}")
+        cacheindex = len(client.messages)
     tprint("Mainloop ended.")
 tprint("Starting IRC thread...")
 ircthread = threading.Thread(target=ircloop, daemon=True)
+threading.Thread(target=render_spinner, daemon=True).start()
 ircthread.start()
-tprint("Reached mainloop!")
-try:
-  raise SystemError("e")
-except:
-  handle_error()
+print("Reached mainloop!")
 while run:  
   if loading:
     display.fill([0, 0, 0])
@@ -89,7 +107,8 @@ while run:
       if event.type == pygame.QUIT:  
           print("Recieved quit trigger from OS.")
           run=False
-    
+      if event.type == pygame.MOUSEWHEEL:
+          print(f"Recieved scroll {event.y}")
 print("Mainloop ended, destroying pygame window.")
 client.quit()
 while client.connected:
