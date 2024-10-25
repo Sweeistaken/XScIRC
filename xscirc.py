@@ -79,6 +79,7 @@ def ircloop():
     client.connect()
     client.detach_connection()
     client.join("##sweezero")
+    client.join("##")
     while client.connected:
       if len(client.messages) > cacheindex:
         for i in client.messages[cacheindex:]:
