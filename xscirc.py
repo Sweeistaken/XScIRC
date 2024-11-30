@@ -80,8 +80,9 @@ def renderer():
   loading = False
   sleep(0.3)
   global display
-  display.fill((0,128,255))
-  pygame.display.flip()
+  while True:
+    display.fill((0,128,255))
+    # pygame.display.flip() #This causes this error in Linux: pygame.error: Could not make GL context current: BadAccess (attempt to access private resource denied)
 
 def ircloop():
     cacheindex = 0
@@ -116,7 +117,7 @@ while run:
     get_splashtext()
     for i, j in zip(splash2, splashRect):
       display.blit(i, j)
-    pygame.display.flip()
+  pygame.display.flip()
     #text = font_debug.render(i, True, white)
   for event in pygame.event.get():  
       if event.type == pygame.QUIT:  
