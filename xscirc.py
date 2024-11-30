@@ -73,6 +73,16 @@ pygame.display.set_icon(icon)
 run=True
 loading=True
 client = scparseirc.IRCSession()
+def renderer():
+  tprint("Taking over splash renderer!")
+  sleep(1)
+  global loading
+  loading = False
+  sleep(0.3)
+  global display
+  display.fill((0,128,255))
+  pygame.display.flip()
+
 def ircloop():
     cacheindex = 0
     global client
@@ -91,10 +101,14 @@ def ircloop():
             tprint(f"[{i.author.name}@{i.target.name if i.target.__class__ == scparseirc.Channel else "PMs"}] {i.content}")
         cacheindex = len(client.messages)
     tprint("Mainloop ended.")
+def load():
+  tprint("Please wait, XScIRC is being prepared...")
+  threading.Thread(target=renderer, daemon=True).start()
 tprint("Starting IRC thread...")
-ircthread = threading.Thread(target=ircloop, daemon=True)
+#ircthread = threading.Thread(target=ircloop, daemon=False)
 threading.Thread(target=render_spinner, daemon=True).start()
-ircthread.start()
+threading.Thread(target=load, daemon=True).start()
+#ircthread.start()
 print("Reached mainloop!")
 while run:  
   if loading:
@@ -108,13 +122,7 @@ while run:
       if event.type == pygame.QUIT:  
           print("Recieved quit trigger from OS.")
           run=False
+          pygame.display.quit()
       if event.type == pygame.MOUSEWHEEL:
           print(f"Recieved scroll {event.y}")
-print("Mainloop ended, destroying pygame window.")
-client.quit()
-while client.connected:
-  sleep(5)
-  tprint("Waiting for client to quit...")
-  pass
-pygame.display.quit()
 print("Exited successfully")
